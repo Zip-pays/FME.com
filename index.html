@@ -3,208 +3,305 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BTC Recovery — Mr Finnur</title>
+<title>Fjármálaeftirlitið (FME) — Claim Portal</title>
 <style>
-  * { margin:0; padding:0; box-sizing:border-box; }
-  html, body { height:100%; font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace; background:#05070d; color:#cfe3ff; }
-  body {
-    background-image: radial-gradient(circle at 20% 0%, rgba(247,147,26,0.08), transparent 60%),
-                      radial-gradient(circle at 100% 100%, rgba(46,134,222,0.08), transparent 55%);
-    display:flex; justify-content:center; padding:32px 16px;
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --fme-blue:#0b3d91;
+    --fme-blue-dark:#082a66;
+    --fme-gold:#d4a017;
+    --fme-gold-dark:#7a5a00;
+    --fme-green:#0a7d3f;
+    --fme-red:#c0392b;
+    --bg:#f4f6fb;
+    --card:#ffffff;
+    --text:#0f1b3d;
+    --muted:#5b6478;
+    --border:#e3e7f0;
   }
-  .wrap { max-width:420px; width:100%; }
-  .header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; padding-bottom:16px; border-bottom:1px solid #18243d; }
-  .brand { display:flex; align-items:center; gap:8px; }
-  .logo { width:32px; height:32px; background:#f7931a; color:#000; border-radius:4px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; }
-  .brand-title { font-size:14px; font-weight:700; letter-spacing:0.12em; color:#e9eef7; }
-  .brand-sub { font-size:10px; text-transform:uppercase; letter-spacing:0.2em; color:#cfe3ff; opacity:0.5; }
-  .status { display:flex; align-items:center; gap:6px; font-size:10px; text-transform:uppercase; letter-spacing:0.15em; color:#5ee2a0; }
-  .dot { width:6px; height:6px; border-radius:50%; background:#5ee2a0; animation:pulse 1.8s infinite; }
-  @keyframes pulse { 0%{opacity:1} 50%{opacity:0.3} 100%{opacity:1} }
-
-  .card { border-radius:8px; padding:20px; background:#0a1224; border:1px solid #18243d; margin-bottom:12px; }
-  .label { font-size:10px; text-transform:uppercase; letter-spacing:0.25em; opacity:0.5; margin-bottom:8px; }
-  .sys-msg { background:#06170f; border:1px solid #1f6f4a; border-radius:6px; padding:16px; margin-bottom:20px; }
-  .sys-title { font-size:14px; font-weight:600; color:#5ee2a0; }
-  .sys-body { font-size:12px; opacity:0.8; line-height:1.6; margin-top:8px; }
-  .wallet-box { background:#04091a; border:1px dashed #2a3a5e; border-radius:6px; padding:12px; font-size:12px; color:#f7c87a; word-break:break-all; margin-bottom:6px; }
-  .wallet-note { font-size:10px; opacity:0.5; margin-bottom:20px; }
-  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:24px; }
-  .stat { background:#04091a; border:1px solid #18243d; border-radius:6px; padding:12px; }
-  .stat-label { font-size:9px; text-transform:uppercase; letter-spacing:0.2em; opacity:0.5; }
-  .stat-val { font-size:14px; font-weight:600; margin-top:4px; color:#e9eef7; }
-  .stat-val.accent { color:#f7c87a; }
-  .stat-val.mono { font-size:10px; font-family:monospace; }
-
-  .btn {
-    width:100%; border:none; border-radius:6px; padding:12px; font-size:13px; font-weight:700;
-    text-transform:uppercase; letter-spacing:0.2em; cursor:pointer; transition:filter 0.15s;
+  html,body{height:100%}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
   }
-  .btn:hover { filter:brightness(1.15); }
-  .btn-primary { background:#f7931a; color:#05070d; box-shadow:0 0 24px rgba(247,147,26,0.35); }
-  .btn-secondary { background:#18243d; color:#cfe3ff; border:1px solid #2a3a5e; }
-  .btn-text { background:transparent; color:#7a8aa8; font-size:11px; }
 
-  .balance-card { background:linear-gradient(135deg,#0a1224 0%,#13213f 100%); border:1px solid #18243d; border-radius:8px; padding:20px; position:relative; overflow:hidden; margin-bottom:12px; }
-  .balance-label { font-size:10px; text-transform:uppercase; letter-spacing:0.25em; opacity:0.5; }
-  .balance-amt { font-size:28px; font-weight:700; color:#e9eef7; margin-top:8px; }
-  .balance-sub { font-size:11px; opacity:0.7; margin-top:4px; }
-  .badge { position:absolute; top:16px; right:16px; font-size:10px; text-transform:uppercase; letter-spacing:0.1em; background:#3a2a0a; color:#ffb454; border:1px solid #6b4a14; padding:4px 8px; border-radius:3px; }
+  /* Facebook-style top loading bar */
+  .top-bar{
+    position:fixed;top:0;left:0;right:0;height:3px;z-index:9999;
+    background:linear-gradient(90deg,#1877f2,#00c6ff,#1877f2);
+    background-size:200% 100%;
+    animation:barMove 1.4s linear infinite;
+    box-shadow:0 0 8px rgba(24,119,242,.6);
+  }
+  @keyframes barMove{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
-  .tile-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:16px; }
-  .tile { background:#0a1224; border:1px solid #18243d; border-radius:6px; padding:12px; text-align:center; }
-  .tile-label { font-size:9px; text-transform:uppercase; letter-spacing:0.2em; opacity:0.5; }
-  .tile-val { font-size:14px; font-weight:700; margin-top:4px; color:#e9eef7; }
-  .tile-val.ok { color:#5ee2a0; }
+  /* Loading overlay */
+  .loading-overlay{
+    position:fixed;inset:0;background:#fff;z-index:9000;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    transition:opacity .5s ease;
+  }
+  .loading-overlay.hide{opacity:0;pointer-events:none}
+  .fme-logo{
+    width:76px;height:76px;border-radius:50%;
+    background:linear-gradient(135deg,var(--fme-blue),var(--fme-blue-dark));
+    color:#fff;display:flex;align-items:center;justify-content:center;
+    font-weight:700;font-size:22px;letter-spacing:1px;
+    box-shadow:0 10px 30px rgba(11,61,145,.25);
+    animation:pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+  .load-title{margin-top:20px;font-size:15px;font-weight:600;color:var(--fme-blue)}
+  .load-sub{margin-top:6px;font-size:12px;color:var(--muted)}
+  .load-track{width:220px;height:4px;background:#e3e7f0;border-radius:99px;margin-top:22px;overflow:hidden}
+  .load-fill{height:100%;width:0;background:linear-gradient(90deg,var(--fme-blue),var(--fme-gold));transition:width .1s linear}
 
-  .tx-btn { width:100%; text-align:left; background:#0a1224; border:1px solid #18243d; border-radius:6px; padding:16px; cursor:pointer; transition:filter 0.15s; color:inherit; font-family:inherit; }
-  .tx-btn:hover { filter:brightness(1.1); }
-  .tx-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px; }
-  .tx-title { font-size:14px; font-weight:600; color:#e9eef7; }
-  .tx-id { font-size:10px; opacity:0.5; margin-top:3px; }
-  .tx-badge { font-size:10px; text-transform:uppercase; letter-spacing:0.1em; background:#2a1010; color:#ff7a7a; border:1px solid #6b1f1f; padding:4px 8px; border-radius:3px; }
-  .tx-row { display:flex; justify-content:space-between; font-size:12px; }
-  .tx-row span:first-child { opacity:0.6; }
-  .tx-row span:last-child { font-weight:600; color:#f7c87a; }
-  .tx-hint { font-size:10px; opacity:0.5; margin-top:12px; }
+  /* Layout */
+  .app{max-width:520px;margin:0 auto;padding:20px 16px 60px;animation:fade .4s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  @keyframes slideDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
 
-  .error-card { background:#0a1224; border:1px solid #6b1f1f; border-radius:8px; padding:20px; box-shadow:0 0 30px rgba(255,40,40,0.15); }
-  .error-header { display:flex; align-items:center; gap:8px; margin-bottom:12px; }
-  .error-dot { width:8px; height:8px; border-radius:50%; background:#ff5a5a; animation:pulse 1.8s infinite; }
-  .error-label { font-size:10px; text-transform:uppercase; letter-spacing:0.3em; color:#ff7a7a; }
-  .error-title { font-size:18px; font-weight:700; color:#e9eef7; margin-bottom:4px; }
-  .error-body { font-size:12px; opacity:0.75; line-height:1.6; margin-bottom:16px; }
-  .fee-box { background:#1a0707; border:1px solid #6b1f1f; border-radius:6px; padding:16px; margin-bottom:16px; }
-  .fee-label { font-size:10px; text-transform:uppercase; letter-spacing:0.25em; opacity:0.7; color:#ff9a9a; margin-bottom:4px; }
-  .fee-amt { font-size:28px; font-weight:700; color:#ff7a7a; }
-  .fee-note { font-size:11px; opacity:0.7; margin-top:4px; }
+  .header{
+    display:flex;align-items:center;gap:12px;padding:14px 16px;
+    background:#fff;border:1px solid var(--border);border-radius:14px;margin-bottom:16px;
+  }
+  .header .fme-logo{width:44px;height:44px;font-size:14px;animation:none}
+  .header h1{font-size:15px;font-weight:700}
+  .header p{font-size:11px;color:var(--muted)}
 
-  .detail-row { display:flex; justify-content:space-between; font-size:12px; margin-bottom:8px; }
-  .detail-row span:first-child { opacity:0.6; }
-  .detail-row span:last-child { color:#e9eef7; }
-  .detail-row .mono { font-family:monospace; font-size:11px; }
+  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:14px;box-shadow:0 4px 14px rgba(15,27,61,.04)}
+  .badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;padding:4px 10px;border-radius:99px;background:#eaf5ee;color:var(--fme-green)}
+  .balance-label{font-size:12px;color:var(--muted);margin-top:12px}
+  .balance{font-size:34px;font-weight:800;color:var(--fme-blue);margin-top:4px;letter-spacing:-.5px}
+  .ref{font-size:11px;color:var(--muted);margin-top:6px}
 
-  .proc-line { font-size:12px; margin-bottom:4px; }
-  .proc-line.ok { color:#9fd3a7; }
-  .proc-line.warn { color:#ffb454; }
+  .grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:14px}
+  .tile{background:#f7f9fd;border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center}
+  .tile .ic{font-size:20px}
+  .tile .lb{font-size:10px;color:var(--muted);margin-top:4px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+  .tile .vl{font-size:12px;font-weight:700;margin-top:2px}
 
-  .footer { text-align:center; font-size:10px; text-transform:uppercase; letter-spacing:0.25em; opacity:0.35; margin-top:32px; }
+  .btn{
+    display:block;width:100%;padding:14px;border:none;border-radius:12px;
+    font-size:15px;font-weight:700;cursor:pointer;transition:transform .1s ease,box-shadow .2s ease;
+    background:linear-gradient(135deg,var(--fme-blue),var(--fme-blue-dark));color:#fff;
+    box-shadow:0 6px 18px rgba(11,61,145,.28);
+  }
+  .btn:hover{transform:translateY(-1px)}
+  .btn:disabled{opacity:.6;cursor:not-allowed}
+  .btn-gold{background:linear-gradient(135deg,var(--fme-gold),#a67c00);box-shadow:0 6px 18px rgba(212,160,23,.35)}
+  .btn-ghost{background:#fff;color:var(--fme-blue);border:1px solid var(--border);box-shadow:none}
 
-  .hidden { display:none !important; }
+  .field{margin-bottom:12px}
+  .field label{display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+  .field input{width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:10px;font-size:14px;background:#fbfcfe;transition:border-color .15s}
+  .field input:focus{outline:none;border-color:var(--fme-blue);background:#fff}
+
+  .section-title{font-size:16px;font-weight:700;margin-bottom:4px}
+  .section-sub{font-size:12px;color:var(--muted);margin-bottom:14px}
+
+  .toast{
+    background:#eaf5ee;border:1px solid #b9dcc3;color:var(--fme-green);
+    padding:12px 14px;border-radius:12px;font-size:13px;font-weight:600;
+    display:flex;align-items:center;gap:8px;animation:slideDown .3s ease;
+  }
+
+  .warn{
+    background:#fff8e1;border:1px solid #f0d67a;border-radius:12px;padding:16px;
+  }
+  .warn h3{color:var(--fme-gold-dark);font-size:14px;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+  .warn p{font-size:12px;color:#6b5100;line-height:1.5}
+
+  .fee-box{
+    background:linear-gradient(135deg,#fff8e1,#fff);
+    border:2px solid var(--fme-gold);border-radius:14px;padding:18px;text-align:center;margin:14px 0;
+  }
+  .fee-label{font-size:11px;color:var(--fme-gold-dark);font-weight:700;text-transform:uppercase;letter-spacing:.6px}
+  .fee-amt{font-size:38px;font-weight:800;color:var(--fme-gold-dark);margin-top:4px;letter-spacing:-.5px}
+  .fee-note{font-size:11px;color:var(--muted);margin-top:6px}
+
+  .summary{background:#f7f9fd;border-radius:10px;padding:12px;font-size:12px}
+  .summary .row{display:flex;justify-content:space-between;padding:4px 0;color:var(--muted)}
+  .summary .row b{color:var(--text)}
+
+  .support{
+    background:#fff;border:1px dashed var(--border);border-radius:12px;padding:14px;text-align:center;margin-top:14px;
+  }
+  .support a{color:#229ed9;font-weight:700;text-decoration:none;font-size:13px}
+
+  .processing{text-align:center;padding:26px 10px}
+  .spinner{
+    width:56px;height:56px;border:5px solid #e3e7f0;border-top-color:var(--fme-blue);
+    border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
-<div class="wrap">
+
+<div class="top-bar" id="topBar"></div>
+
+<!-- LOADING -->
+<div class="loading-overlay" id="loading">
+  <div class="fme-logo">FME</div>
+  <div class="load-title">Fjármálaeftirlitið</div>
+  <div class="load-sub">Securing your session…</div>
+  <div class="load-track"><div class="load-fill" id="loadFill"></div></div>
+</div>
+
+<!-- APP -->
+<div class="app" id="app" style="display:none">
   <div class="header">
-    <div class="brand">
-      <div class="logo">&#x20BF;</div>
-      <div>
-        <div class="brand-title">FINNUR//RECOVERY</div>
-        <div class="brand-sub">Asset Reclaim System v4.21</div>
-      </div>
-    </div>
-    <div class="status"><span class="dot"></span> online</div>
-  </div>
-
-  <!-- Confirm Screen -->
-  <div id="screen-confirm">
-    <div class="card">
-      <div class="label">// system message</div>
-      <div class="sys-msg">
-        <div class="sys-title">&#x2713; BTC RECOVERY HAS BEEN SUCCESSFUL</div>
-        <div class="sys-body">Hello <strong style="color:#e9eef7;">Mr Finnur</strong> &mdash; the autonomous recovery sequence has completed. Kindly confirm your Disbursement Wallet to authorise release.</div>
-      </div>
-      <div class="label">Disbursement wallet</div>
-      <div class="wallet-box">3Cdwu6HDVHS8JBoCrzQ2hmRm7hpwp7bNTS</div>
-      <div class="wallet-note">&#8617; verified &middot; checksum OK &middot; BIP-141 segwit</div>
-      <div class="grid2">
-        <div class="stat"><div class="stat-label">Amount</div><div class="stat-val accent">&#x20AC;848,411</div></div>
-        <div class="stat"><div class="stat-label">Asset</div><div class="stat-val">BTC</div></div>
-        <div class="stat"><div class="stat-label">Tx ID</div><div class="stat-val mono">RX88-FN2025</div></div>
-        <div class="stat"><div class="stat-label">Node</div><div class="stat-val">EU-NODE-07</div></div>
-      </div>
-      <button class="btn btn-primary" onclick="go('processing')">&#9656; Confirm Wallet</button>
-      <p style="text-align:center; font-size:10px; opacity:0.5; margin-top:12px;">Signed handshake required &middot; awaiting operator input</p>
+    <div class="fme-logo">FME</div>
+    <div>
+      <h1>Fjármálaeftirlitið</h1>
+      <p>Financial Supervisory Authority · Iceland</p>
     </div>
   </div>
-
-  <!-- Processing Screen -->
-  <div id="screen-processing" class="hidden">
-    <div class="card">
-      <div class="label">// processing</div>
-      <div style="margin-bottom:20px;">
-        <div class="proc-line ok">[OK] handshake established with disbursement wallet</div>
-        <div class="proc-line ok">[OK] segwit address verified &middot; checksum 0x9F</div>
-        <div class="proc-line ok">[OK] routing through EU-NODE-07</div>
-        <div class="proc-line ok">[..] broadcasting transaction to mempool</div>
-        <div class="proc-line warn">[!!] response from custodial bridge &mdash; review required</div>
-      </div>
-      <button class="btn btn-secondary" onclick="go('dashboard')">&#9656; Open Dashboard</button>
-    </div>
-  </div>
-
-  <!-- Dashboard Screen -->
-  <div id="screen-dashboard" class="hidden">
-    <div class="balance-card">
-      <div class="balance-label">Reclaimed Balance</div>
-      <div class="balance-amt">&#x20AC;848,411</div>
-      <div class="balance-sub">BTC &middot; pending disbursement</div>
-      <span class="badge">&#x26A0; action required</span>
-    </div>
-    <div class="tile-grid">
-      <div class="tile"><div class="tile-label">Node</div><div class="tile-val">07</div></div>
-      <div class="tile"><div class="tile-label">Latency</div><div class="tile-val">42ms</div></div>
-      <div class="tile"><div class="tile-label">Sig</div><div class="tile-val ok">OK</div></div>
-    </div>
-    <div class="label">// transaction log</div>
-    <button class="tx-btn" onclick="go('error')">
-      <div class="tx-top">
-        <div>
-          <div class="tx-title">BTC Recovery Disbursement</div>
-          <div class="tx-id">RX88-FN2025</div>
-        </div>
-        <span class="tx-badge">&#x2715; VIEW</span>
-      </div>
-      <div class="tx-row"><span>Amount</span><span>&#x20AC;848,411 BTC</span></div>
-      <div class="tx-hint">&#8617; tap to view transaction</div>
-    </button>
-  </div>
-
-  <!-- Error Screen -->
-  <div id="screen-error" class="hidden">
-    <div class="error-card">
-      <div class="error-header">
-        <span class="error-dot"></span>
-        <span class="error-label">// transaction error</span>
-      </div>
-      <div class="error-title">Disbursement Halted</div>
-      <div class="error-body">The autonomous recovery node attempted to broadcast your transaction of <span style="color:#f7c87a;">&#x20AC;848,411 BTC</span>, but the custodial bridge requires a one-time miner relay fee before the funds can be released to your wallet.</div>
-      <div class="fee-box">
-        <div class="fee-label">Outstanding Network Fee</div>
-        <div class="fee-amt">&#x20AC;80</div>
-        <div class="fee-note">Required to authorise on-chain broadcast.</div>
-      </div>
-      <div style="margin-bottom:20px;">
-        <div class="detail-row"><span>Error code</span><span class="mono">ERR_FEE_REQUIRED &middot; 0x402</span></div>
-        <div class="detail-row"><span>Tx ID</span><span class="mono">0xA9F3-7C21-BE40-RX88-FN2025</span></div>
-        <div class="detail-row"><span>Node</span><span>EU-NODE-07</span></div>
-        <div class="detail-row"><span>Status</span><span>HALTED</span></div>
-      </div>
-      <button class="btn btn-primary">&#9656; Resolve Fee</button>
-      <button class="btn btn-text" onclick="go('dashboard')">&#8592; back to dashboard</button>
-    </div>
-  </div>
-
-  <div class="footer">&copy; Recovery Grid &middot; EU-NODE-07</div>
+  <div id="view"></div>
 </div>
 
 <script>
-  function go(screen) {
-    document.getElementById('screen-confirm').classList.add('hidden');
-    document.getElementById('screen-processing').classList.add('hidden');
-    document.getElementById('screen-dashboard').classList.add('hidden');
-    document.getElementById('screen-error').classList.add('hidden');
-    document.getElementById('screen-' + screen).classList.remove('hidden');
+  // ---------- LOADING ----------
+  const loadFill = document.getElementById('loadFill');
+  const loading  = document.getElementById('loading');
+  const app      = document.getElementById('app');
+  let start = performance.now();
+  const DURATION = 4500;
+  function tick(t){
+    const p = Math.min(1,(t-start)/DURATION);
+    loadFill.style.width = (p*100)+'%';
+    if(p<1) requestAnimationFrame(tick);
+    else{
+      loading.classList.add('hide');
+      setTimeout(()=>{loading.style.display='none';app.style.display='block';renderDashboard();},400);
+    }
+  }
+  requestAnimationFrame(tick);
+
+  const view = () => document.getElementById('view');
+
+  // ---------- DASHBOARD ----------
+  function renderDashboard(){
+    view().innerHTML = `
+      <div class="card">
+        <span class="badge">✓ Claim Approved</span>
+        <div class="balance-label">Available Claim Balance</div>
+        <div class="balance">$1,000,000.00</div>
+        <div class="ref">Reference: FME-2026-0087421</div>
+        <div class="grid">
+          <div class="tile"><div class="ic">📁</div><div class="lb">Case</div><div class="vl">Verified</div></div>
+          <div class="tile"><div class="ic">🛡️</div><div class="lb">AML</div><div class="vl">Cleared</div></div>
+          <div class="tile"><div class="ic">⏱️</div><div class="lb">ETA</div><div class="vl">24h</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title">Ready to receive funds?</div>
+        <div class="section-sub">Add your bank account to begin the release process.</div>
+        <button class="btn" onclick="renderClaimForm()">Claim Funds →</button>
+      </div>
+    `;
+  }
+
+  // ---------- CLAIM FORM ----------
+  function renderClaimForm(){
+    view().innerHTML = `
+      <div class="card">
+        <div class="section-title">Beneficiary Bank Details</div>
+        <div class="section-sub">Enter the account where funds will be deposited.</div>
+        <div class="field"><label>Full Legal Name</label><input id="f1" placeholder="John Doe"></div>
+        <div class="field"><label>IBAN</label><input id="f2" placeholder="DE89 3704 0044 0532 0130 00"></div>
+        <div class="field"><label>BIC / SWIFT</label><input id="f3" placeholder="COBADEFFXXX"></div>
+        <div class="field"><label>Bank Name</label><input id="f4" placeholder="Commerzbank AG"></div>
+        <div class="field"><label>Country</label><input id="f5" placeholder="Germany"></div>
+        <button class="btn" onclick="saveAccount()">Save Account</button>
+        <div style="height:8px"></div>
+        <button class="btn btn-ghost" onclick="renderDashboard()">← Back</button>
+      </div>
+    `;
+  }
+
+  function saveAccount(){
+    const ids=['f1','f2','f3','f4','f5'];
+    for(const id of ids){ if(!document.getElementById(id).value.trim()){ alert('Please complete all fields.'); return; } }
+    view().innerHTML = `
+      <div class="card processing">
+        <div class="spinner"></div>
+        <div class="section-title">Saving account…</div>
+        <div class="section-sub">Verifying details with your bank</div>
+      </div>
+    `;
+    setTimeout(renderAccountSaved,2200);
+  }
+
+  function renderAccountSaved(){
+    view().innerHTML = `
+      <div class="toast">✓ Account successfully added and verified</div>
+      <div style="height:14px"></div>
+      <div class="card">
+        <div class="section-title">Process Payment</div>
+        <div class="section-sub">Your account is verified. Initiate the release to complete the claim.</div>
+        <div class="summary">
+          <div class="row"><span>Claim Amount</span><b>$1,000,000.00</b></div>
+          <div class="row"><span>Beneficiary</span><b>Verified ✓</b></div>
+          <div class="row"><span>Estimated Arrival</span><b>Within 24h</b></div>
+        </div>
+        <div style="height:14px"></div>
+        <button class="btn btn-gold" onclick="processPayment()">Process Payment</button>
+      </div>
+    `;
+  }
+
+  // ---------- PROCESSING ----------
+  function processPayment(){
+    view().innerHTML = `
+      <div class="card processing">
+        <div class="spinner"></div>
+        <div class="section-title">Processing payment…</div>
+        <div class="section-sub">Contacting settlement network</div>
+        <div class="load-track" style="margin:18px auto 0"><div class="load-fill" id="pFill"></div></div>
+      </div>
+    `;
+    const fill = document.getElementById('pFill');
+    let s = performance.now(); const D = 3800;
+    function t(now){
+      const p = Math.min(1,(now-s)/D);
+      fill.style.width = (p*100)+'%';
+      if(p<1) requestAnimationFrame(t);
+      else renderFee();
+    }
+    requestAnimationFrame(t);
+  }
+
+  // ---------- FEE ----------
+  function renderFee(){
+    view().innerHTML = `
+      <div class="card">
+        <div class="warn">
+          <h3>⚠️ Release Fee Required</h3>
+          <p>To finalize your AML clearance and release the funds, a one-time regulatory fee of €870 must be paid. This is required by Icelandic financial law before settlement.</p>
+        </div>
+        <div class="fee-box">
+          <div class="fee-label">Regulatory Release Fee</div>
+          <div class="fee-amt">€870.00</div>
+          <div class="fee-note">Non-refundable · Required by FME regulation</div>
+        </div>
+        <div class="summary">
+          <div class="row"><span>Claim Amount</span><b>$1,000,000.00</b></div>
+          <div class="row"><span>Release Fee</span><b>€870.00</b></div>
+          <div class="row"><span>Status</span><b style="color:var(--fme-gold-dark)">Awaiting Payment</b></div>
+        </div>
+        <div style="height:14px"></div>
+        <button class="btn btn-gold">Pay €870 Fee</button>
+      </div>
+      <div class="support">
+        Need help completing payment?<br>
+        <a href="https://t.me/cerified_Finance" target="_blank">💬 Contact FME Support on Telegram</a>
+      </div>
+    `;
   }
 </script>
 </body>
